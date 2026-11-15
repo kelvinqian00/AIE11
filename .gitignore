@@ -153,3 +153,5 @@ workspace
 # Generated student data (Session 02 advanced module)
 student_responses.txt
 *.txt.bak
+*.npz
+*.npy
