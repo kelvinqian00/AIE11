@@ -31,7 +31,35 @@ def build_messages(question: str, hits: list[Hit]) -> list[dict]:
     Hint: Session 2's RAG_SYSTEM_TEMPLATE is a good starting point, and a
     better one once you have read Step 3's failures and edited it.
     """
-    raise NotImplementedError("Write build_messages() in retrieval_app/answer.py")
+    if not hits:
+        raise NotImplementedError("Need to handle empty hits case")
+
+    context_prompt = ""
+    for hit in hits:
+        context_prompt += f"[Source {hit.chunk_id}]: {hit.text}\n\n"
+
+    system_content = """
+    You are a historian of the history of Teyvat.
+    Please reference the provided context when answering the user's questions.
+    If the question has nothing to do with the history of Teyvat, for example if it is instead about the history of Earth,
+    kindly decline to answer.
+    If the question is about Teyvat's history but you cannot find the relevant information in the context,
+    reply that you do not know since it is not in the context provided.
+    Keep responses somewhat brief, but not so brief that you lose important information,
+    and as a historian you should maintain an air of erudition.
+    """
+
+    user_content = f"Context Information:\n{context_prompt}\n\nQuestion: {question}"
+    return [
+        {
+            "role": "system",
+            "content": system_content
+        },
+        {
+            "role": "user",
+            "content": user_content
+        }
+    ]
 
 
 def answer(question: str, hits: list[Hit]) -> str:
@@ -41,4 +69,6 @@ def answer(question: str, hits: list[Hit]) -> str:
     then dig out `.choices[0].message.content`. Look up what `temperature`
     does to your results when you run the same question twice.
     """
-    raise NotImplementedError("Write answer() in retrieval_app/answer.py")
+    messages = build_messages(question, hits)
+    responses = client().chat.completions.create(model=CHAT_MODEL, messages=messages, temperature=0.5)
+    return responses.choices[0].message.content

@@ -6,6 +6,7 @@ and `search` are the lesson.
 """
 
 from dataclasses import dataclass
+import hashlib, os
 
 import numpy as np
 from openai import OpenAI
@@ -61,7 +62,9 @@ def embed_texts(texts: list[str]) -> np.ndarray:
     result in np.array(). Print `response.usage` once — knowing what a corpus
     costs to embed is the number that decides architecture at scale.
     """
-    raise NotImplementedError("Write embed_texts() in retrieval_app/index.py")
+    embedding_result = client().embeddings.create(input=texts, model=EMBEDDING_MODEL)
+    print("Usage: ", embedding_result.usage)
+    return np.array([embedding_data.embedding for embedding_data in embedding_result.data])
 
 
 def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
@@ -70,7 +73,7 @@ def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
     Hint: the dot product, divided by the product of the two norms.
     NumPy has `np.dot` and `np.linalg.norm`.
     """
-    raise NotImplementedError("Write cosine_similarity() in retrieval_app/index.py")
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
 
 def build_index(chunks: list[str]) -> np.ndarray:
@@ -87,7 +90,23 @@ def build_index(chunks: list[str]) -> np.ndarray:
     Hint: this is mostly a call to embed_texts(). Notice that it happens once
     per process, and that a fresh process has no memory of the last one.
     """
-    raise NotImplementedError("Write build_index() in retrieval_app/index.py")
+    # This is my main improvement - caching the embeddings on disk in order to avoid spending tokens to re-embed chunks
+    # In order to avoid stale files if the chunking or model change, we need to create a hash from the chunks + model name
+    h = hashlib.sha256()
+    h.update(EMBEDDING_MODEL.encode("utf-8"))
+    for chunk in chunks:
+        h.update(b"\x00")
+        h.update(chunk.encode("utf-8"))
+    key = h.hexdigest()[:16]
+    save_file_subname = f"embeddings_{key}"
+    save_file_name = f"{save_file_subname}.npy"
+
+    if os.path.isfile(save_file_name):
+        return np.load(save_file_name)
+    else:
+        embeddings = embed_texts(chunks)
+        np.save(save_file_subname, embeddings)
+        return embeddings
 
 
 def search(query: str, chunks: list[str], matrix: np.ndarray, k: int = 3) -> list[Hit]:
@@ -110,4 +129,10 @@ def search(query: str, chunks: list[str], matrix: np.ndarray, k: int = 3) -> lis
       - Read the signature again: it says "up to k". Nothing here forces you to
         return exactly k. That freedom is the whole of Step 4's threshold option.
     """
-    raise NotImplementedError("Write search() in retrieval_app/index.py")
+    embedded_query = embed_texts([query])[0]
+    scored_chunks = []
+    for i, embedded_chunk in enumerate(matrix):
+        similarity = cosine_similarity(embedded_query, embedded_chunk)
+        scored_chunks.append(Hit(i, chunks[i], similarity))
+    scored_chunks.sort(key=lambda hit: hit.score, reverse=True)
+    return scored_chunks[:k]
