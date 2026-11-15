@@ -27,7 +27,7 @@ The `GenshinTimeline.txt` content is directly taken from the Genshin Impact wiki
 
 **What I changed**
 
-I decided to add a functionality to save the embeddings to a local file.
+I decided to add a functionality to save the embeddings to a local file. The load-or-build branch is shown in Diagram.png.
 
 **Why**
 
@@ -35,4 +35,4 @@ I noticed that I was burning nearly 60k tokens with each prompt just on running 
 
 **What would change my mind**
 
-If this were a more complicated system where saving the embeddings somehow caused bugs or other issues (or if tokens were literally free).
+What did make me reconsider the utility of this was looking at my token costs and seeing that embedding tokens are extremely cheap compared to generation tokens. That said, it still saved some time

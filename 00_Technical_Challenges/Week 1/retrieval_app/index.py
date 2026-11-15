@@ -108,6 +108,8 @@ def build_index(chunks: list[str]) -> np.ndarray:
         np.save(save_file_subname, embeddings)
         return embeddings
 
+    # return embed_texts(chunks)
+
 
 def search(query: str, chunks: list[str], matrix: np.ndarray, k: int = 3) -> list[Hit]:
     """Find the k chunks most similar to the query.
