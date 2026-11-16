@@ -62,6 +62,9 @@ def embed_texts(texts: list[str]) -> np.ndarray:
     result in np.array(). Print `response.usage` once — knowing what a corpus
     costs to embed is the number that decides architecture at scale.
     """
+    if not texts:
+        return np.array([])
+    
     embedding_result = client().embeddings.create(input=texts, model=EMBEDDING_MODEL)
     print("Usage: ", embedding_result.usage)
     return np.array([embedding_data.embedding for embedding_data in embedding_result.data])

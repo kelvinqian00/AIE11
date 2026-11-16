@@ -31,6 +31,8 @@ def build_messages(question: str, hits: list[Hit]) -> list[dict]:
     Hint: Session 2's RAG_SYSTEM_TEMPLATE is a good starting point, and a
     better one once you have read Step 3's failures and edited it.
     """
+    # This is deliberately maintained since index.search() should always return at least 1 chunk
+    # unless the corpus is empty, which is a pathological edge case anyways.
     if not hits:
         raise NotImplementedError("Need to handle empty hits case")
 
