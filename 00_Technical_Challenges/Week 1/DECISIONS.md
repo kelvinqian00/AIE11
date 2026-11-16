@@ -25,6 +25,8 @@ The `GenshinTimeline.txt` content is directly taken from the Genshin Impact wiki
 | Non-history question (Genshin in-universe) | Do you have a Hydro vision? | ⚠️ | Tried to answer the question (by saying it doesn't have a Vision when it doesn't know either way), and tries to connect back to Teyvat lore |
 | Non-history question (Genshin out-of-universe) | Do you have tips on how to beat the Spiral Abyss? | ✅ | Declined to answer, as it should |
 
+### Decision 1 - Saving Embeddings
+
 **What I changed**
 
 I decided to add a functionality to save the embeddings to a local file. The load-or-build branch is shown in Diagram.png.
@@ -35,4 +37,18 @@ I noticed that I was burning nearly 60k tokens with each prompt just on running 
 
 **What would change my mind**
 
-What did make me reconsider the utility of this was looking at my token costs and seeing that embedding tokens are extremely cheap compared to generation tokens. That said, it still saved some time
+What did make me reconsider the utility of this was looking at my token costs and seeing that embedding tokens are extremely cheap compared to generation tokens. That said, it still zeroed out the indexing time, which was around 1-2 seconds without the caching.
+
+### Decision 2 - Increasing k
+
+**What I changed**
+
+For certain questions, particularly the question "Who is Arlecchino", I increased the value of k from the default of 3 to higher values like 5 or 10.
+
+**Why**
+
+With more chunks retrieved during search, there were more chunks that contained the keyword "Arlecchino," and thus the LLM could answer the question properly, whereas before the keyword was absent from the context and thus the LLM declined to answer.
+
+**What would change my mind**
+
+Increasing k is a cheap and simple method, but it might not always be viable, e.g. if business requirements restrict the number of chunks retrieved to exactly 3 (which was something that applied to the RAG pipeline I helped build at Capital One). In that case, other techniques would need to be applied, such as performing keyword search alongside cosine similarity search, to retrieve the correct chunks.
