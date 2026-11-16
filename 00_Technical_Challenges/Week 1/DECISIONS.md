@@ -52,3 +52,25 @@ With more chunks retrieved during search, there were more chunks that contained 
 **What would change my mind**
 
 Increasing k is a cheap and simple method, but it might not always be viable, e.g. if business requirements restrict the number of chunks retrieved to exactly 3 (which was something that applied to the RAG pipeline I helped build at Capital One). In that case, other techniques would need to be applied, such as performing keyword search alongside cosine similarity search, to retrieve the correct chunks.
+
+### Friend Questions w/ Feedback
+
+| Type | Question | Feedback |
+| --- | --- | --- |
+| One question I expect it should be able to do with that source available to it. | Who was Eberhart, and what happened on the expedition to Sal Vindagnyr? | Good answer. Almost all the details seem to be accurate. One small issue is that it makes it sound like it's unknown whether or not Eberhart came home when, in fact, it is known that he didn't come home. The part that is unknown is what happened instead. My best guess is that it didn't read all the way to the very last bullet point in that section of the timeline, since it's framing does match what the bullet point right before it says. |
+| One question that seems plausible to do but requires some reasonable inference/analysis/knowlege beyond what is said in the source (to demonstrate it can answer questions that it should be able to answer but doesn't have a direct answer in the source, without hallucinating). | What was happening in Mondstadt around the time of the Sakoku Decree? | Disappointing answer. The timeline definitely does mention the Sakoku Decree and places it ar \[sic\] one year ago. Maybe it struggled with the exact matching of a proper noun if the RAG relies on embeddings only. Or maybe it was just that it was looking for Sakoku Decree and Monstadt together, which resulted in the actual mention of the Sakoku Decree not coming up since it wasn't brought up in the context of Monstadt. This one was also challenging because it required first knowing/finding out when the Sakoku decree was and then finding the corresponding time in Monstadt's recent history, which means it either needs to be able to do a multi-step lookup to answer this, or it would have needed to rely on having pre-existing timeline knowlege to just assume one year ago, without lookup, and focus on finding information about what was going on in Monstadt a year ago. |
+| One question that shouldn't be possible to answer (to see that it doesn't hallucinate). | Who challenged the Raiden Shogun to a duel before the throne over the Vision Hunt Decree, and what was his name? | This answer was good. It was a test against hallucinating and/or over-relying on unconfirmed training data knowlege, as fans often refer to this unnamed character as Tomo, which a lot of LLMs seem to know, but it's a totally fan-made name. And this one would have been "tempting" to hallucinate or apply pre-existing knowlege since the page doesn't specifically flag it as unknown, but it did not give in to this. |
+
+#### Additional Feedback
+
+High level feedback across all of the answers - it's pretty good. It was able to retrieve relatively obscure information, and avoid hallucinating on questions that feel like it should have an answer. 
+
+##### Stylistic:
+
+Overall fine, but it does feel like it's a little too transparent about its technical mechanisms to feel like it's a "historian", eg. Saying things about the provided "context" not having the information, rather than framing it as being information it's simply doesn't know. As a development prototype, it's probably a good thing to get that transparency because it makes troubleshooting easier, but when it's closer to a finished product, it may be better for it to lean into its "persona" a little but more, to feel like a historian sharing her knowlege, or explaining that certain things are not known when an answer isn't available, rather than exposing that it's just a retrieval bot.
+
+##### Technical:
+
+May want to figure out why it couldn't find Sakoku decree anywhere in the text, when the name is in fact on the page. And may want to find a way to do multi step research if/when a first try doesn't find an answer.
+
+Eg. if it failed that question because looking for "Monstadt" and "Sakoku Decree" near each other in the text brought up no results, it should have been able to look up those terms seperately (to learn the Sakoku Decree was a year ago) and then do a followup search for Monstadt a year ago. I think this would help bring it a step beyond just being just a "fuzzy text search and summarize" bot, into actually being able to answer complex lore questions
